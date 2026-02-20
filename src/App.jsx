@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import "./styles/App.css";
 
 import MatrixRain from "./components/MatrixRain";
@@ -28,13 +28,15 @@ function buildShuffledQuestion(q) {
 }
 
 const CELL_SIZE = 68;
+const MAX_LIVES = 3;
+const QUESTION_TIME = 10;
 
 function App() {
   const [phase, setPhase] = useState("intro");
   const [denyMode, setDenyMode] = useState(false);
 
   const [score, setScore] = useState(0);
-  const [errors, setErrors] = useState(0);
+  const [lives, setLives] = useState(MAX_LIVES);
   const [currentCell, setCurrentCell] = useState(0);
   const [answeredCells, setAnsweredCells] = useState([]);
   const [showQuestion, setShowQuestion] = useState(false);
@@ -46,18 +48,18 @@ function App() {
   const [isCorrect, setIsCorrect] = useState(false);
   const [gameOver, setGameOver] = useState(false);
 
+  const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
+  const [timerActive, setTimerActive] = useState(false);
+
   const [glitchPulse, setGlitchPulse] = useState(false);
   const [bigGlitch, setBigGlitch] = useState(false);
-  const [hudFlash, setHudFlash] = useState({ score: false, node: false, errors: false });
-
-  // Position écran du lapin (calculée depuis le board)
+  const [hudFlash, setHudFlash] = useState({ score: false });
   const [rabbitScreen, setRabbitScreen] = useState({ x: -999, y: -999 });
 
   const boardRef = useRef(null);
   const totalCells = pathCoordinates.length;
 
-  // Calcule la position écran du lapin
-  const updateRabbitPos = () => {
+  const updateRabbitPos = useCallback(() => {
     const viewport = boardRef.current;
     if (!viewport) return;
     const rect = viewport.getBoundingClientRect();
@@ -66,12 +68,12 @@ function App() {
       x: rect.left + pos.x - viewport.scrollLeft,
       y: rect.top + pos.y - viewport.scrollTop,
     });
-  };
+  }, [currentCell]);
 
   useEffect(() => {
     if (phase !== "game") return;
     updateRabbitPos();
-  }, [currentCell, phase]);
+  }, [currentCell, phase, updateRabbitPos]);
 
   useEffect(() => {
     if (phase !== "game") return;
@@ -83,7 +85,28 @@ function App() {
       viewport.removeEventListener("scroll", updateRabbitPos);
       window.removeEventListener("resize", updateRabbitPos);
     };
-  }, [phase, currentCell]);
+  }, [phase, updateRabbitPos]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (!timerActive || answered) return;
+    if (timeLeft <= 0) {
+      setTimerActive(false);
+      setAnswered(true);
+      setIsCorrect(false);
+      setSelectedOption(null);
+      setAnsweredCells((prev) => [...prev, currentCell]);
+      setLives((l) => {
+        const next = l - 1;
+        if (next <= 0) setTimeout(() => { setShowQuestion(false); setGameOver(true); }, 900);
+        return next;
+      });
+      microGlitch();
+      return;
+    }
+    const t = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearTimeout(t);
+  }, [timerActive, timeLeft, answered]);
 
   useEffect(() => {
     if (phase !== "game") return;
@@ -96,11 +119,6 @@ function App() {
     return () => clearInterval(t);
   }, [phase]);
 
-  const flashHud = (key) => {
-    setHudFlash(prev => ({ ...prev, [key]: true }));
-    setTimeout(() => setHudFlash(prev => ({ ...prev, [key]: false })), 350);
-  };
-
   const microGlitch = () => {
     setGlitchPulse(true);
     setTimeout(() => setGlitchPulse(false), 130);
@@ -110,13 +128,17 @@ function App() {
     }
   };
 
+  const flashHud = (key) => {
+    setHudFlash(prev => ({ ...prev, [key]: true }));
+    setTimeout(() => setHudFlash(prev => ({ ...prev, [key]: false })), 350);
+  };
+
   useEffect(() => {
     if (phase !== "game") return;
     const viewport = boardRef.current;
     if (!viewport) return;
     const pos = pathCoordinates[currentCell];
-    const centerX = pos.x - viewport.clientWidth / 2;
-    viewport.scrollTo({ left: Math.max(0, centerX), behavior: "smooth" });
+    viewport.scrollTo({ left: Math.max(0, pos.x - viewport.clientWidth / 2), behavior: "smooth" });
     setTimeout(updateRabbitPos, 400);
   }, [currentCell, phase]);
 
@@ -131,7 +153,7 @@ function App() {
     };
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, [phase, currentCell]);
+  }, [phase, updateRabbitPos]);
 
   const handleIntroYes = () => { microGlitch(); setPhase("game"); };
   const handleIntroNo = () => {
@@ -150,7 +172,7 @@ function App() {
     if (infoCells[index]) {
       setCurrentInfo(infoCells[index]);
       setShowInfo(true);
-      if (infoCells[index].type === "bonus") setScore((s) => s + infoCells[index].points);
+      if (infoCells[index].type === "bonus") { setScore((s) => s + infoCells[index].points); flashHud("score"); }
       setAnsweredCells((prev) => [...prev, index]);
     } else {
       const q = buildShuffledQuestion(questions[index % questions.length]);
@@ -159,6 +181,8 @@ function App() {
       setAnswered(false);
       setSelectedOption(null);
       setIsCorrect(false);
+      setTimeLeft(QUESTION_TIME);
+      setTimerActive(true);
     }
   };
 
@@ -168,15 +192,27 @@ function App() {
       setShowQuestion(false);
       setAnswered(false);
       setSelectedOption(null);
+      setTimerActive(false);
       currentCell + 1 >= totalCells ? setGameOver(true) : setCurrentCell((c) => c + 1);
       return;
     }
+    if (answered) return;
+    setTimerActive(false);
     const correct = optionIndex === currentQuestion.correct;
     setSelectedOption(optionIndex);
     setIsCorrect(correct);
     setAnswered(true);
-    correct ? (setScore((s) => s + currentQuestion.points), flashHud("score")) : (setErrors((e) => e + 1), flashHud("errors"));
     setAnsweredCells((prev) => [...prev, currentCell]);
+    if (correct) {
+      setScore((s) => s + currentQuestion.points);
+      flashHud("score");
+    } else {
+      setLives((l) => {
+        const next = l - 1;
+        if (next <= 0) setTimeout(() => { setShowQuestion(false); setGameOver(true); }, 900);
+        return next;
+      });
+    }
   };
 
   const handleInfoClose = () => {
@@ -187,8 +223,10 @@ function App() {
 
   const restartGame = () => {
     microGlitch();
-    setScore(0); setErrors(0); setCurrentCell(0); setAnsweredCells([]);
+    setScore(0); setLives(MAX_LIVES);
+    setCurrentCell(0); setAnsweredCells([]);
     setGameOver(false); setShowQuestion(false); setShowInfo(false);
+    setTimerActive(false); setTimeLeft(QUESTION_TIME);
     setPhase("intro"); setDenyMode(false);
   };
 
@@ -208,14 +246,22 @@ function App() {
     });
 
   const half = CELL_SIZE / 2;
-  const gameOverTitle = errors === 0 ? "ACCESS GRANTED" : "ACCESS DENIED";
   const rabbitVisible = phase === "game" && !gameOver && !showQuestion && !showInfo;
+
+  const getEndScreen = () => {
+    const livesLost = MAX_LIVES - lives;
+    if (lives <= 0) return { title: "GAME OVER", sub: "La Matrice t'a eu. Recommence." };
+    if (livesLost === 0) return { title: "THE ONE", sub: "Tu vois le code. Tu es Neo." };
+    if (livesLost === 1) return { title: "HACKEUR CONFIRME", sub: "La Matrice commence a se fissurer." };
+    return { title: "ENCORE DANS LA MATRICE", sub: "La pilule bleue etait plus facile." };
+  };
+  const endScreen = getEndScreen();
 
   return (
     <div className={`app ${glitchPulse ? "glitch-pulse" : ""}`}>
       {bigGlitch && <div className="glitch-overlay" />}
 
-      {/* LAPIN rendu ici, enfant direct de .app — aucun stacking context parent */}
+      {/* LAPIN — enfant direct de .app */}
       {rabbitVisible && (
         <img
           src="/src/assets/rabbit.png"
@@ -232,11 +278,19 @@ function App() {
             filter:
               "grayscale(1) brightness(2.8) contrast(1.1) " +
               "drop-shadow(0 0 14px rgba(255,255,255,0.9)) " +
-              "drop-shadow(0 0 30px rgba(232,255,244,0.6)) " +
-              "drop-shadow(0 0 50px rgba(232,255,244,0.4))",
+              "drop-shadow(0 0 30px rgba(232,255,244,0.6))",
             animation: "rabbitBreath 2.8s ease-in-out infinite",
           }}
         />
+      )}
+
+      {/* Vies — fixed au-dessus de tout y compris les modals */}
+      {phase === "game" && (
+        <div className="lives-fixed">
+          {Array.from({ length: MAX_LIVES }, (_, i) => (
+            <span key={i} className={`life-dot ${i < lives ? "alive" : "dead"}`}>■</span>
+          ))}
+        </div>
       )}
 
       {phase === "intro" && (
@@ -245,6 +299,8 @@ function App() {
 
       {phase === "game" && (
         <div className="window">
+
+          {/* Topbar */}
           <div className="topbar">
             <div className="brand">
               <span className="brand-dot">■</span>
@@ -254,8 +310,7 @@ function App() {
             </div>
             <div className="hud">
               <div className={`hud-line ${hudFlash.score ? "hud-flash" : ""}`}>SCORE: {score}</div>
-              <div className={`hud-line ${hudFlash.node ? "hud-flash" : ""}`}>NODE: {currentCell + 1}/{totalCells}</div>
-              <div className={`hud-line ${hudFlash.errors ? "hud-flash" : ""}`}>ERRORS: {errors}</div>
+              <div className="hud-line">NODE: {currentCell + 1}/{totalCells}</div>
             </div>
           </div>
 
@@ -267,12 +322,13 @@ function App() {
                   {renderPaths()}
                   {pathCoordinates.map((pos, i) => {
                     const cellInfo = infoCells[i];
+                    const isCurrent = i === currentCell;
                     return (
                       <div
                         key={i}
                         className={[
                           "cell",
-                          i === currentCell ? "current rabbit-here" : "",
+                          isCurrent ? "current rabbit-here" : "",
                           answeredCells.includes(i) ? "answered" : "",
                           cellInfo ? `cell-${cellInfo.type}` : "cell-question",
                         ].join(" ")}
@@ -295,13 +351,11 @@ function App() {
             <div className="content">
               <MatrixRain />
               <div className="game-over">
-                <div className="game-over-title" data-text={gameOverTitle}>{gameOverTitle}</div>
-                <div className="game-over-sub">
-                  {errors === 0 ? "Knock... knock... You are ready." : "You do not have the level for the Matrix."}
-                </div>
+                <div className="game-over-title" data-text={endScreen.title}>{endScreen.title}</div>
+                <div className="game-over-sub">{endScreen.sub}</div>
                 <div className="game-over-stats">
                   <div>SCORE: {score}</div>
-                  <div>ERRORS: {errors}</div>
+                  <div>VIES RESTANTES: {lives < 0 ? 0 : lives}</div>
                 </div>
                 <div className="game-over-actions">
                   <button className="link-action" data-text="RESTART" onClick={restartGame}>RESTART</button>
@@ -311,8 +365,15 @@ function App() {
           )}
 
           {showQuestion && (
-            <QuestionDialog question={currentQuestion} onAnswer={handleAnswer}
-              answered={answered} selectedOption={selectedOption} isCorrect={isCorrect} />
+            <QuestionDialog
+              question={currentQuestion}
+              onAnswer={handleAnswer}
+              answered={answered}
+              selectedOption={selectedOption}
+              isCorrect={isCorrect}
+              timeLeft={timeLeft}
+              totalTime={QUESTION_TIME}
+            />
           )}
           {showInfo && <InfoDialog cellData={currentInfo} onClose={handleInfoClose} />}
         </div>

@@ -5,7 +5,7 @@ function pickGlitchChar() {
     return chars[Math.floor(Math.random() * chars.length)];
 }
 
-function QuestionDialog({ question, onAnswer, answered, selectedOption, isCorrect }) {
+function QuestionDialog({ question, onAnswer, answered, selectedOption, isCorrect, timeLeft, totalTime }) {
     const [typed, setTyped] = useState("");
 
     useEffect(() => {
@@ -36,12 +36,27 @@ function QuestionDialog({ question, onAnswer, answered, selectedOption, isCorrec
 
     if (!question) return null;
 
+    const timerPct = totalTime > 0 ? (timeLeft / totalTime) * 100 : 0;
+
     return (
         <div className="modal-overlay">
             <div className="dialog">
                 <div className="dialog-titlebar">
-                    {/* data-text pour le glitch CSS ::before */}
                     <div className="dialog-title" data-text="QUESTION">QUESTION</div>
+
+                    {/* Timer dans la titlebar */}
+                    <div className="dialog-timer">
+                        <div className="dialog-timer-bar-wrap">
+                            <div
+                                className="dialog-timer-bar"
+                                style={{ width: answered ? "0%" : `${timerPct}%` }}
+                            />
+                        </div>
+                        <span className="dialog-timer-count">
+                            {answered ? "" : `${timeLeft}s`}
+                        </span>
+                    </div>
+
                     <button className="dialog-x" onClick={() => onAnswer(null, true)} aria-label="Close">
                         ✕
                     </button>
@@ -52,7 +67,7 @@ function QuestionDialog({ question, onAnswer, answered, selectedOption, isCorrec
 
                     <div className="question-text">
                         {typed}
-                        <span className="cursor on" />
+                        <span className="cursor on">█</span>
                     </div>
 
                     <div className="options">
@@ -79,14 +94,9 @@ function QuestionDialog({ question, onAnswer, answered, selectedOption, isCorrec
                     {answered && (
                         <>
                             <div className={`result-box ${isCorrect ? "correct" : "incorrect"}`}>
-                                {isCorrect ? `✓ CORRECT  +${question.points}` : "✗ INCORRECT"}
+                                {isCorrect ? `✓ CORRECT  +${question.points}` : timeLeft === 0 ? "✗ TEMPS ECOULE" : "✗ INCORRECT"}
                             </div>
-                            {/* data-text pour glitch */}
-                            <button
-                                className="link-action"
-                                data-text="CONTINUE"
-                                onClick={() => onAnswer(null, true)}
-                            >
+                            <button className="link-action" data-text="CONTINUE" onClick={() => onAnswer(null, true)}>
                                 CONTINUE
                             </button>
                         </>
