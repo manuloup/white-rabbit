@@ -1,0 +1,1286 @@
+@import url("https://fonts.googleapis.com/css2?family=VT323&display=swap");
+
+:root {
+  --matrix: #20ff7a;
+  --matrix-dim: rgba(32, 255, 122, 0.18);
+  --white: #e8fff4;
+  --danger: #ff214a;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  color: var(--white);
+  font-family: "VT323", monospace;
+  overflow: hidden;
+}
+
+/* =========================
+   APP — centrage parfait
+========================= */
+.app {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Scanlines CRT */
+.app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: repeating-linear-gradient(0deg,
+      rgba(0, 0, 0, 0.22) 0px, rgba(0, 0, 0, 0.22) 1px,
+      rgba(32, 255, 122, 0.018) 1px, rgba(32, 255, 122, 0.018) 2px,
+      transparent 2px, transparent 5px);
+  opacity: 0.80;
+  animation: scanMove 10s linear infinite;
+}
+
+@keyframes scanMove {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 0 40px;
+  }
+}
+
+/* Vignette */
+.app::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+  background: radial-gradient(ellipse at center, transparent 38%, rgba(0, 0, 0, 0.82) 100%);
+}
+
+/* =========================
+   GLITCH — 100% vert
+========================= */
+.glitch-pulse .window {
+  animation: glitchPulse 130ms linear;
+}
+
+@keyframes glitchPulse {
+  0% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-2px) skewX(-1deg);
+    filter: brightness(1.05);
+  }
+
+  50% {
+    transform: translateX(2px) skewX(0.5deg);
+  }
+
+  80% {
+    transform: translateX(-1px);
+  }
+
+  100% {
+    transform: translateX(0);
+    filter: none;
+  }
+}
+
+.glitch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  animation: greenGlitch 180ms steps(3) forwards;
+}
+
+.glitch-overlay::before,
+.glitch-overlay::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: rgba(32, 255, 122, 0.08);
+  mix-blend-mode: screen;
+}
+
+.glitch-overlay::before {
+  top: 18%;
+  height: 3px;
+  animation: glitchBar1 180ms steps(2) forwards;
+}
+
+.glitch-overlay::after {
+  top: 65%;
+  height: 2px;
+  animation: glitchBar2 180ms steps(2) forwards;
+}
+
+@keyframes greenGlitch {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes glitchBar1 {
+  0% {
+    transform: translateX(0);
+    width: 55%;
+    left: 8%;
+  }
+
+  50% {
+    transform: translateX(-6px);
+    width: 75%;
+    left: 4%;
+  }
+
+  100% {
+    transform: translateX(3px);
+    width: 35%;
+    left: 30%;
+    opacity: 0;
+  }
+}
+
+@keyframes glitchBar2 {
+  0% {
+    transform: translateX(0);
+    width: 40%;
+    left: 22%;
+  }
+
+  50% {
+    transform: translateX(5px);
+    width: 65%;
+    left: 0%;
+  }
+
+  100% {
+    transform: translateX(-2px);
+    width: 28%;
+    left: 48%;
+    opacity: 0;
+  }
+}
+
+/* =========================
+   INTRO SCREEN
+========================= */
+.intro-root {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+.intro-terminal {
+  width: min(980px, 92vw);
+  border: 1px solid rgba(32, 255, 122, 0.20);
+  padding: 48px 52px;
+  background: rgba(0, 0, 0, 0.65);
+  box-shadow: 0 0 70px rgba(32, 255, 122, 0.12);
+}
+
+/* Texte intro avec glitch scramble sur chaque ligne */
+.intro-line {
+  font-size: 34px;
+  line-height: 1.35;
+  color: rgba(232, 255, 244, 0.92);
+  text-shadow: 0 0 18px rgba(32, 255, 122, 0.22);
+  margin-bottom: 18px;
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+/* Glitch layer sur les lignes de l'intro */
+.intro-line::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: var(--matrix);
+  opacity: 0;
+  pointer-events: none;
+  animation: textGlitchA 4s infinite;
+}
+
+.intro-line::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: rgba(32, 255, 122, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  animation: textGlitchB 4s infinite;
+}
+
+@keyframes textGlitchA {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+    clip-path: inset(0 100% 0 0);
+  }
+
+  3% {
+    opacity: 1;
+    transform: translateX(-2px);
+    clip-path: inset(0 35% 0 0);
+  }
+
+  6% {
+    opacity: 0.4;
+    clip-path: inset(35% 0 35% 0);
+  }
+
+  9% {
+    opacity: 0.9;
+    transform: translateX(1px);
+    clip-path: inset(0 0 0 55%);
+  }
+
+  12% {
+    opacity: 0;
+  }
+
+  60% {
+    opacity: 0;
+  }
+
+  63% {
+    opacity: 0.75;
+    transform: translateX(2px);
+    clip-path: inset(55% 0 0 0);
+  }
+
+  66% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes textGlitchB {
+  0% {
+    opacity: 0;
+  }
+
+  5% {
+    opacity: 0.5;
+    transform: translateX(3px);
+    clip-path: inset(15% 0 55% 0);
+  }
+
+  8% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+
+  61% {
+    opacity: 0;
+  }
+
+  64% {
+    opacity: 0.45;
+    transform: translateX(-3px);
+    clip-path: inset(0 0 70% 0);
+  }
+
+  67% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.intro-big {
+  font-size: 54px;
+  margin-bottom: 26px;
+}
+
+/* Curseur — PETIT (4px×16px) */
+.cursor {
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background: rgba(232, 255, 244, 0.85);
+  margin-left: 6px;
+  vertical-align: middle;
+  opacity: 0;
+  box-shadow: 0 0 6px rgba(32, 255, 122, 0.30);
+}
+
+.cursor.on {
+  opacity: 1;
+}
+
+.intro-actions {
+  margin-top: 22px;
+  display: flex;
+  gap: 28px;
+}
+
+/* Boutons YES/NO avec glitch aussi */
+.intro-link {
+  background: transparent;
+  border: none;
+  color: var(--matrix);
+  font-family: "VT323", monospace;
+  font-size: 34px;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 10px;
+  position: relative;
+  display: inline-block;
+}
+
+.intro-link::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: rgba(32, 255, 122, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  animation: textGlitchA 3s infinite;
+  animation-delay: 1.2s;
+}
+
+.intro-link:hover {
+  text-shadow: 0 0 22px rgba(32, 255, 122, 0.35);
+}
+
+.intro-spam {
+  margin-top: 26px;
+  border-top: 1px solid rgba(32, 255, 122, 0.20);
+  padding-top: 16px;
+  max-height: 180px;
+  overflow: hidden;
+}
+
+.intro-spam-line {
+  font-size: 18px;
+  opacity: 0.8;
+  color: rgba(232, 255, 244, 0.65);
+}
+
+/* =========================
+   GAME WINDOW
+========================= */
+.window {
+  width: min(1440px, 97vw);
+  height: min(860px, 95vh);
+  border: 1px solid rgba(32, 255, 122, 0.20);
+  background: rgba(2, 8, 6, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(32, 255, 122, 0.05),
+    0 0 100px rgba(32, 255, 122, 0.07),
+    inset 0 0 80px rgba(0, 0, 0, 0.55);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(32, 255, 122, 0.13);
+  background: rgba(0, 0, 0, 0.50);
+  flex-shrink: 0;
+  height: 52px;
+  position: relative;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-dot {
+  color: rgba(32, 255, 122, 0.65);
+  font-size: 12px;
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(32, 255, 122, 0.50);
+  }
+}
+
+/* Titre avec glitch PERMANENT en boucle */
+.brand-text {
+  color: rgba(232, 255, 244, 0.80);
+  letter-spacing: 0.28em;
+  font-size: 19px;
+  text-transform: uppercase;
+  position: relative;
+  display: inline-block;
+}
+
+/* Calque glitch #1 */
+.brand-text::before {
+  content: attr(data-scramble);
+  position: absolute;
+  inset: 0;
+  color: var(--matrix);
+  opacity: 0;
+  pointer-events: none;
+  /* cycle court : 2.4s pour un rendu très dynamique */
+  animation: brandGlitchA 2.4s infinite;
+}
+
+/* Calque glitch #2 — offset */
+.brand-text::after {
+  content: attr(data-scramble);
+  position: absolute;
+  inset: 0;
+  color: rgba(32, 255, 122, 0.50);
+  opacity: 0;
+  pointer-events: none;
+  animation: brandGlitchB 2.4s infinite;
+}
+
+@keyframes brandGlitchA {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+    clip-path: inset(0 100% 0 0);
+  }
+
+  4% {
+    opacity: 1;
+    transform: translateX(-2px);
+    clip-path: inset(0 25% 0 0);
+  }
+
+  8% {
+    opacity: 0.3;
+    clip-path: inset(40% 0 30% 0);
+  }
+
+  12% {
+    opacity: 0.9;
+    transform: translateX(1px);
+    clip-path: inset(0 0 0 45%);
+  }
+
+  16% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+
+  /* 2e flash à ~50% */
+  50% {
+    opacity: 0;
+  }
+
+  54% {
+    opacity: 0.85;
+    transform: translateX(2px);
+    clip-path: inset(55% 0 0 0);
+  }
+
+  58% {
+    opacity: 0.2;
+    clip-path: inset(0 0 60% 0);
+  }
+
+  62% {
+    opacity: 0;
+  }
+
+  /* 3e flash rapide à ~80% */
+  80% {
+    opacity: 0;
+  }
+
+  82% {
+    opacity: 0.7;
+    transform: translateX(-1px);
+    clip-path: inset(20% 0 50% 0);
+  }
+
+  85% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes brandGlitchB {
+  0% {
+    opacity: 0;
+  }
+
+  6% {
+    opacity: 0.55;
+    transform: translateX(3px);
+    clip-path: inset(18% 0 58% 0);
+  }
+
+  10% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+
+  52% {
+    opacity: 0;
+  }
+
+  56% {
+    opacity: 0.50;
+    transform: translateX(-3px);
+    clip-path: inset(0 0 72% 0);
+  }
+
+  60% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+
+  81% {
+    opacity: 0;
+  }
+
+  83% {
+    opacity: 0.45;
+    transform: translateX(2px);
+    clip-path: inset(55% 0 15% 0);
+  }
+
+  86% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.hud {
+  text-align: right;
+  color: rgba(32, 255, 122, 0.65);
+  letter-spacing: 0.14em;
+  font-size: 14px;
+  line-height: 1.40;
+}
+
+/* Content */
+.content {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Matrix rain */
+.matrix-rain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.36;
+}
+
+.matrix-column {
+  position: absolute;
+  top: -100%;
+  font-size: 14px;
+  color: rgba(32, 255, 122, 0.65);
+  white-space: pre;
+  text-shadow: 0 0 8px rgba(32, 255, 122, 0.18);
+  animation: matrixFall linear infinite;
+}
+
+@keyframes matrixFall {
+  to {
+    transform: translateY(120vh);
+  }
+}
+
+/* Board */
+.board-viewport {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.board-viewport::-webkit-scrollbar {
+  height: 5px;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.board-viewport::-webkit-scrollbar-thumb {
+  background: rgba(32, 255, 122, 0.18);
+}
+
+.board-track {
+  position: relative;
+  width: 3200px;
+  height: 100%;
+}
+
+/* Chemin */
+.path-line {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg,
+      rgba(232, 255, 244, 0.06),
+      rgba(232, 255, 244, 0.22),
+      rgba(232, 255, 244, 0.06));
+  transform-origin: left center;
+  opacity: 0.65;
+  z-index: 3;
+}
+
+/* =========================
+   CELLS — plus grandes (68px)
+========================= */
+.cell {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  border: 1px solid rgba(232, 255, 244, 0.28);
+  background: rgba(2, 8, 6, 0.80);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: rgba(232, 255, 244, 0.68);
+  z-index: 4;
+  transition: border-color 0.10s, box-shadow 0.10s;
+  user-select: none;
+}
+
+.cell:hover {
+  border-color: rgba(32, 255, 122, 0.55);
+  box-shadow: 0 0 18px rgba(32, 255, 122, 0.12);
+}
+
+.cell.answered {
+  opacity: 0.28;
+}
+
+.cell.current {
+  border-color: rgba(32, 255, 122, 0.85);
+  box-shadow: 0 0 28px rgba(32, 255, 122, 0.20), inset 0 0 10px rgba(32, 255, 122, 0.05);
+
+}
+
+@keyframes currentPulse_unused {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(32, 255, 122, 0.16);
+  }
+
+  50% {
+    box-shadow: 0 0 36px rgba(32, 255, 122, 0.28);
+    filter: brightness(1.10);
+  }
+}
+
+.cell-num {
+  font-size: 22px;
+  letter-spacing: 0.06em;
+}
+
+.cell-mark {
+  font-size: 16px;
+  opacity: 0.85;
+}
+
+.cell-info {
+  border-color: rgba(232, 255, 244, 0.48);
+  background: rgba(232, 255, 244, 0.04);
+}
+
+.cell-bonus {
+  border-color: rgba(255, 33, 74, 0.60);
+  color: rgba(255, 33, 74, 0.88);
+  box-shadow: 0 0 20px rgba(255, 33, 74, 0.10);
+}
+
+/* =========================
+   RABBIT — z-index 9, au-dessus de tout
+========================= */
+.rabbit-container {
+  position: absolute;
+  pointer-events: none;
+  z-index: 20;
+  /* mix-blend-mode supprimé : il annulait le z-index et forçait le lapin sous les cases */
+}
+
+.rabbit-image {
+  width: 64px;
+  height: auto;
+  opacity: 0.97;
+  filter:
+    grayscale(1) brightness(2.2) contrast(1.05) drop-shadow(0 0 8px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 22px rgba(232, 255, 244, 0.28));
+  animation: rabbitBreath 2.8s ease-in-out infinite;
+}
+
+@keyframes rabbitBreath {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.94;
+  }
+
+  50% {
+    transform: translateY(-3px) scale(1.01);
+    opacity: 1;
+  }
+}
+
+/* =========================
+   MODALS
+========================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+}
+
+.dialog {
+  width: min(900px, 92vw);
+  border: 1px solid rgba(32, 255, 122, 0.20);
+  background: rgba(2, 8, 6, 0.94);
+  box-shadow: 0 0 60px rgba(32, 255, 122, 0.08);
+}
+
+.dialog-titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(32, 255, 122, 0.14);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.dialog-title {
+  letter-spacing: 0.22em;
+  color: rgba(232, 255, 244, 0.70);
+  font-size: 18px;
+  position: relative;
+  display: inline-block;
+}
+
+/* Glitch sur les titres de dialog */
+.dialog-title::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: var(--matrix);
+  opacity: 0;
+  pointer-events: none;
+  animation: textGlitchA 5s infinite;
+  animation-delay: 0.8s;
+}
+
+.dialog-x {
+  background: transparent;
+  border: none;
+  color: rgba(232, 255, 244, 0.70);
+  font-family: "VT323", monospace;
+  font-size: 26px;
+  cursor: pointer;
+  padding: 0 6px;
+}
+
+.dialog-x:hover {
+  color: var(--matrix);
+  text-shadow: 0 0 12px rgba(32, 255, 122, 0.28);
+}
+
+.dialog-content {
+  padding: 18px 20px 22px;
+}
+
+.category-badge {
+  display: inline-block;
+  border: 1px solid rgba(32, 255, 122, 0.20);
+  padding: 4px 9px;
+  letter-spacing: 0.18em;
+  color: rgba(32, 255, 122, 0.72);
+  margin-bottom: 13px;
+  font-size: 13px;
+}
+
+.question-text {
+  font-size: 24px;
+  line-height: 1.30;
+  color: rgba(232, 255, 244, 0.86);
+  margin-bottom: 14px;
+}
+
+.options {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 14px;
+}
+
+.option {
+  text-align: left;
+  width: 100%;
+  border: 1px solid rgba(232, 255, 244, 0.20);
+  background: rgba(0, 0, 0, 0.30);
+  color: rgba(232, 255, 244, 0.78);
+  font-family: "VT323", monospace;
+  font-size: 19px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 0.10s, transform 0.10s;
+}
+
+.option:hover {
+  border-color: rgba(32, 255, 122, 0.55);
+  transform: translateX(3px);
+}
+
+.option.correct {
+  border-color: rgba(32, 255, 122, 0.85);
+  background: rgba(32, 255, 122, 0.07);
+  color: rgba(32, 255, 122, 0.95);
+}
+
+.option.incorrect {
+  border-color: rgba(232, 255, 244, 0.38);
+  opacity: 0.68;
+}
+
+.result-box {
+  border: 1px solid rgba(32, 255, 122, 0.18);
+  padding: 9px 12px;
+  letter-spacing: 0.14em;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.result-box.correct {
+  color: rgba(32, 255, 122, 0.9);
+}
+
+.result-box.incorrect {
+  color: rgba(232, 255, 244, 0.68);
+}
+
+.link-action {
+  background: transparent;
+  border: none;
+  color: var(--matrix);
+  font-family: "VT323", monospace;
+  font-size: 26px;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 8px;
+  position: relative;
+  display: inline-block;
+}
+
+.link-action::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: rgba(32, 255, 122, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  animation: textGlitchA 4s infinite;
+  animation-delay: 0.5s;
+}
+
+.link-action:hover {
+  text-shadow: 0 0 18px rgba(32, 255, 122, 0.32);
+}
+
+/* InfoDialog compat */
+.dialog-body {
+  padding: 18px 20px 22px;
+}
+
+.dialog-meta {
+  display: inline-block;
+  border: 1px solid rgba(32, 255, 122, 0.20);
+  padding: 4px 9px;
+  letter-spacing: 0.18em;
+  color: rgba(32, 255, 122, 0.72);
+  margin-bottom: 13px;
+  font-size: 13px;
+}
+
+.dialog-question {
+  font-size: 20px;
+  line-height: 1.45;
+  color: rgba(232, 255, 244, 0.86);
+  margin-bottom: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.cursor-block {
+  width: 5px;
+  height: 16px;
+  margin-top: 3px;
+  background: rgba(232, 255, 244, 0.75);
+  flex-shrink: 0;
+  animation: cursorBlink 900ms steps(2, end) infinite;
+}
+
+@keyframes cursorBlink {
+
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.pill-bonus {
+  font-size: 24px;
+  color: rgba(255, 33, 74, 0.9);
+  letter-spacing: 0.12em;
+  margin-bottom: 14px;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+/* =========================
+   GAME OVER
+========================= */
+.game-over {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 40px;
+}
+
+.game-over-title {
+  font-size: 56px;
+  letter-spacing: 0.28em;
+  color: rgba(232, 255, 244, 0.82);
+  text-shadow: 0 0 24px rgba(32, 255, 122, 0.18);
+  margin-bottom: 14px;
+  position: relative;
+  display: inline-block;
+}
+
+.game-over-title::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: var(--matrix);
+  opacity: 0;
+  pointer-events: none;
+  animation: textGlitchA 3s infinite;
+}
+
+.game-over-sub {
+  font-size: 21px;
+  color: rgba(232, 255, 244, 0.65);
+  margin-bottom: 18px;
+}
+
+.game-over-stats {
+  display: grid;
+  gap: 5px;
+  color: rgba(32, 255, 122, 0.70);
+  letter-spacing: 0.12em;
+  margin-bottom: 22px;
+  font-size: 19px;
+}
+
+.game-over-actions {
+  margin-top: 8px;
+}
+
+/* Pulse sur .current via box-shadow animé SANS filter ni transform — ne crée pas de stacking context */
+@keyframes currentPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(32, 255, 122, 0.16), inset 0 0 8px rgba(32, 255, 122, 0.04);
+  }
+
+  50% {
+    box-shadow: 0 0 38px rgba(32, 255, 122, 0.30), inset 0 0 14px rgba(32, 255, 122, 0.08);
+  }
+}
+
+.cell.current {
+  border-color: rgba(32, 255, 122, 0.85);
+  animation: currentPulse 1.1s ease-in-out infinite;
+}
+
+/* Case sous le lapin : invisible mais garde sa place pour le clic */
+.cell.rabbit-here {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+/* Case current : bordure du haut supprimée pour laisser le lapin déborder */
+.cell.current {
+  border-top-color: transparent !important;
+}
+
+/* Case sous le lapin : complètement invisible, le lapin flotte seul */
+.cell.rabbit-here {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+/* =========================
+   GLITCH AU HOVER SUR LES CASES
+========================= */
+.cell:not(.answered):not(.rabbit-here):hover {
+  animation: cellHoverGlitch 0.3s steps(2) forwards;
+}
+
+@keyframes cellHoverGlitch {
+  0% {
+    transform: translateX(0);
+    border-color: rgba(32, 255, 122, 0.55);
+  }
+
+  20% {
+    transform: translateX(-3px);
+    border-color: rgba(32, 255, 122, 0.9);
+    clip-path: inset(10% 0 10% 0);
+  }
+
+  40% {
+    transform: translateX(2px);
+    clip-path: inset(0 0 0 0);
+  }
+
+  60% {
+    transform: translateX(-1px);
+    border-color: rgba(232, 255, 244, 0.8);
+  }
+
+  80% {
+    transform: translateX(1px);
+  }
+
+  100% {
+    transform: translateX(0);
+    border-color: rgba(32, 255, 122, 0.55);
+  }
+}
+
+/* =========================
+   FLICKER SUR LES CHIFFRES DES CASES
+========================= */
+.cell-num {
+  animation: numFlicker 6s infinite;
+}
+
+@keyframes numFlicker {
+
+  0%,
+  90%,
+  100% {
+    opacity: 1;
+  }
+
+  91% {
+    opacity: 0.2;
+  }
+
+  92% {
+    opacity: 1;
+  }
+
+  94% {
+    opacity: 0.4;
+  }
+
+  95% {
+    opacity: 1;
+  }
+
+  97% {
+    opacity: 0.1;
+  }
+
+  98% {
+    opacity: 1;
+  }
+}
+
+/* Chaque case a un délai différent pour que ça ne flicke pas toutes en même temps */
+.cell:nth-child(2n) .cell-num {
+  animation-delay: -1.2s;
+}
+
+.cell:nth-child(3n) .cell-num {
+  animation-delay: -2.7s;
+}
+
+.cell:nth-child(4n) .cell-num {
+  animation-delay: -4.1s;
+}
+
+.cell:nth-child(5n) .cell-num {
+  animation-delay: -0.8s;
+}
+
+.cell:nth-child(7n) .cell-num {
+  animation-delay: -3.3s;
+}
+
+.cell:nth-child(11n) .cell-num {
+  animation-delay: -5.5s;
+}
+
+/* =========================
+   SCAN LINE QUI TRAVERSE LE BOARD
+========================= */
+.board-viewport::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  height: 6px;
+  background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(32, 255, 122, 0.12) 40%,
+      rgba(32, 255, 122, 0.22) 50%,
+      rgba(32, 255, 122, 0.12) 60%,
+      transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+  animation: boardScan 7s linear infinite;
+}
+
+@keyframes boardScan {
+  0% {
+    top: -6px;
+    opacity: 0;
+  }
+
+  5% {
+    opacity: 1;
+  }
+
+  95% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+/* =========================
+   HUD GLITCH QUAND LES VALEURS CHANGENT
+========================= */
+.hud-line {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.hud-line.hud-flash {
+  animation: hudGlitch 0.35s steps(3) forwards;
+}
+
+@keyframes hudGlitch {
+  0% {
+    transform: translateX(0);
+    color: rgba(32, 255, 122, 0.65);
+  }
+
+  20% {
+    transform: translateX(-2px);
+    color: rgba(232, 255, 244, 0.95);
+    filter: brightness(1.5);
+  }
+
+  40% {
+    transform: translateX(2px);
+    clip-path: inset(20% 0 20% 0);
+  }
+
+  60% {
+    transform: translateX(-1px);
+    color: rgba(32, 255, 122, 0.9);
+    clip-path: inset(0 0 0 0);
+  }
+
+  80% {
+    transform: translateX(1px);
+  }
+
+  100% {
+    transform: translateX(0);
+    color: rgba(32, 255, 122, 0.65);
+    filter: none;
+  }
+}

@@ -1,0 +1,29 @@
+.rabbit-container {
+    position: absolute;
+    pointer-events: none;
+    z-index: 20;
+    /* PAS de mix-blend-mode : ça crée un stacking context et annule le z-index */
+}
+
+.rabbit-image {
+    width: 64px;
+    height: auto;
+    opacity: 0.97;
+    filter:
+        grayscale(1) brightness(2.2) contrast(1.05) drop-shadow(0 0 8px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 22px rgba(232, 255, 244, 0.28));
+    animation: rabbitBreath 2.8s ease-in-out infinite;
+}
+
+@keyframes rabbitBreath {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 0.94;
+    }
+
+    50% {
+        transform: translateY(-3px) scale(1.01);
+        opacity: 1;
+    }
+}
